@@ -266,7 +266,7 @@
     // =======================================================================================
     // ⚠️ PENTING: Ganti URL di bawah dengan URL Web App Anda yang baru dari Google Apps Script
     // =======================================================================================
-    const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwXQBdv83wcvHCREFv7mgbYmiOP8wPDKshxASE0wkh9fAVDc3QJFJOmfeFmbfivebwt/exec';
+    const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxVnWgQ6GpY7T-sfQIoQS6jjacmAYUgFBkz_1niVFETy5x9XBgxVFMbxDPfdGogBibhrw/exec';
     
     const STATUS_OPTIONS = ['Hadir', 'Sakit', 'Izin', 'Tugas Luar', 'Lainnya'];
     const CATEGORY_ORDER = ['Kepala Sekolah', 'Guru', 'Tenaga Kependidikan'];
@@ -288,21 +288,12 @@
         document.getElementById('loading-overlay').classList.add('hidden');
     }
 
-    function generateId() {
-        return Math.random().toString(36).substr(2, 9);
-    }
-
     function getTodayString() {
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
-    }
-
-    function formatDateDisplay(dateStr) {
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        return new Date(dateStr).toLocaleDateString('id-ID', options);
     }
 
     function changeDate(newDateStr) {
@@ -422,14 +413,14 @@
             textStatus.textContent = 'Status: Sudah Disimpan (Terkunci)';
             textStatus.classList.remove('text-gray-800');
             textStatus.classList.add('text-emerald-700');
-            subStatus.textContent = 'Data presensi tanggal ini sudah dikunci. Klik Hapus & Edit Ulang jika ada kesalahan.';
+            subStatus.textContent = `Data presensi tanggal ${currentDateStr} sudah dikunci. Klik Hapus & Edit Ulang jika ada kesalahan.`;
         } else {
             btnSimpan.classList.remove('hidden');
             btnReset.classList.add('hidden');
             textStatus.textContent = 'Status: Belum Disimpan';
             textStatus.classList.remove('text-emerald-700');
             textStatus.classList.add('text-gray-800');
-            subStatus.textContent = 'Pastikan semua data terisi, lalu klik Simpan Presensi.';
+            subStatus.textContent = `Pastikan semua data tanggal ${currentDateStr} terisi, lalu klik Simpan Presensi.`;
         }
     }
 
@@ -547,7 +538,7 @@
 
         const todayAtt = getTodayAttendance();
         if (Object.keys(todayAtt).length === 0) {
-            customAlert('Perhatian', 'Belum ada data kehadiran yang diisi untuk tanggal ini.');
+            customAlert('Perhatian', `Belum ada data kehadiran yang diisi untuk tanggal ${currentDateStr}.`);
             return;
         }
 
@@ -565,7 +556,7 @@
             
             isTodaySubmitted = true;
             renderPresensi();
-            customAlert('Berhasil', 'Data presensi tanggal ini berhasil disimpan dan dikunci.');
+            customAlert('Berhasil', `Data presensi tanggal ${currentDateStr} berhasil disimpan dan dikunci.`);
         })
         .catch(err => {
             hideLoading();
@@ -591,7 +582,7 @@
                     globalAttendance[currentDateStr] = {}; 
                     isTodaySubmitted = false;
                     renderPresensi();
-                    customAlert('Berhasil', 'Data tanggal ini telah dihapus. Silakan isi ulang presensi.');
+                    customAlert('Berhasil', `Data tanggal ${currentDateStr} telah dihapus. Silakan isi ulang presensi.`);
                 })
                 .catch(err => {
                     hideLoading();
@@ -666,6 +657,8 @@
         const periodMonths = parseInt(document.getElementById('filter-periode').value);
         const selectedStaffId = document.getElementById('filter-pegawai').value || 'all';
         const statusColors = { 'Hadir': '#0d9488', 'Sakit': '#3b82f6', 'Izin': '#f59e0b', 'Tugas Luar': '#8b5cf6', 'Lainnya': '#64748b' };
+        
+        const endDataStr = getTodayString(); // Use today as the end point for recaps
         const now = new Date();
         const cutoffDate = new Date();
         cutoffDate.setMonth(now.getMonth() - periodMonths);
@@ -675,7 +668,7 @@
         let totalCounts = { 'Hadir': 0, 'Sakit': 0, 'Izin': 0, 'Tugas Luar': 0, 'Lainnya': 0 };
 
         for (const [date, dailyData] of Object.entries(allData)) {
-            if (date >= cutoffDateStr && date <= currentDateStr) {
+            if (date >= cutoffDateStr && date <= endDataStr) {
                 if (selectedStaffId === 'all') {
                     for (const fullStatus of Object.values(dailyData)) {
                         const baseStatus = getBaseStatus(fullStatus);
@@ -731,7 +724,7 @@
         
         let csvContent = "\uFEFFTanggal,Kategori,Nama,NIP,Status,Keterangan\n";
 
-        const dates = Object.keys(allData).filter(d => d >= cutoffDateStr && d <= currentDateStr).sort().reverse();
+        const dates = Object.keys(allData).filter(d => d >= cutoffDateStr && d <= getTodayString()).sort().reverse();
 
         dates.forEach(date => {
             const dailyData = allData[date];
@@ -803,7 +796,7 @@
 
         if (!nama) return;
 
-        const newStaff = { id: generateId(), nama: nama, kategori: kategori, nip: nip, isActive: true };
+        const newStaff = { id: (Math.random().toString(36).substr(2, 9)), nama: nama, kategori: kategori, nip: nip, isActive: true };
         const staffList = getStaff();
         staffList.push(newStaff);
         saveStaff(staffList);
@@ -837,7 +830,7 @@
     function initApp() {
         if (GAS_WEB_APP_URL === 'ISI_DENGAN_URL_WEB_APP_ANDA_YANG_BARU') {
             document.getElementById('date-picker').value = getTodayString();
-            customAlert('Error Pengaturan', 'Anda belum memasukkan URL Web App Google Apps Script di dalam kode index.html baris ~270. Aplikasi tidak dapat menarik data.');
+            customAlert('Error Pengaturan', 'Anda belum memasukkan URL Web App Google Apps Script di dalam kode index.html.');
             return;
         }
 
@@ -846,7 +839,10 @@
         
         showLoading('Memuat data dari Google Sheets...');
         
-        fetch(GAS_WEB_APP_URL + '?action=getData', {
+        // Cache-buster: Ensures we fetch fresh data on every page load
+        const cacheBuster = new Date().getTime();
+        
+        fetch(GAS_WEB_APP_URL + '?action=getData&nocache=' + cacheBuster, {
             method: 'GET',
             redirect: 'follow'
         })
