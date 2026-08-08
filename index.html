@@ -340,6 +340,7 @@
         // Kirim HTTP POST ke Google Apps Script
         fetch(GAS_WEB_APP_URL + '?action=syncStaff', {
             method: 'POST',
+            redirect: 'follow',
             body: JSON.stringify({ staff: globalStaff }),
             headers: { 'Content-Type': 'text/plain;charset=utf-8' } // Hindari preflight CORS problem
         })
@@ -566,6 +567,7 @@
             showLoading('Menyimpan presensi...');
             fetch(GAS_WEB_APP_URL + '?action=syncAttendance', {
                 method: 'POST',
+                redirect: 'follow',
                 body: JSON.stringify({ dateStr: currentDateStr, dailyData: todayAtt }),
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' }
             })
@@ -590,6 +592,7 @@
                     showLoading('Mereset presensi...');
                     fetch(GAS_WEB_APP_URL + '?action=deleteAttendance', {
                         method: 'POST',
+                        redirect: 'follow',
                         body: JSON.stringify({ dateStr: currentDateStr }),
                         headers: { 'Content-Type': 'text/plain;charset=utf-8' }
                     })
@@ -854,7 +857,10 @@
             
             showLoading('Memuat data dari Google Sheets...');
             
-            fetch(GAS_WEB_APP_URL + '?action=getData')
+            fetch(https://script.google.com/macros/s/AKfycbzFww4HOgf_VH2tS2lXbqXpE00tqKsKwNZQdM5V8BLdlgImE2vaDUZVUz4KsIWWMqtZ/exec + '?action=getData', {
+                method: 'GET',
+                redirect: 'follow'
+            })
                 .then(res => res.json())
                 .then(response => {
                     globalStaff = response.staff;
