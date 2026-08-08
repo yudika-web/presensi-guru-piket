@@ -63,8 +63,8 @@
                     <p class="text-emerald-100 text-sm text-center md:text-left mt-1">Pencatatan Kehadiran Guru & Tenaga Kependidikan</p>
                 </div>
                 <div class="bg-white/10 px-4 py-2 rounded-lg border border-white/20 text-center shadow-inner">
-                    <p class="text-xs uppercase tracking-wider text-emerald-200">Tanggal Hari Ini</p>
-                    <p id="current-date-display" class="font-bold text-lg font-serif mt-1">-</p>
+                    <label for="date-picker" class="text-xs uppercase tracking-wider text-emerald-200 cursor-pointer block mb-1">Pilih Tanggal</label>
+                    <input type="date" id="date-picker" onchange="changeDate(this.value)" class="bg-transparent font-bold text-lg font-serif text-white border-b border-white/50 focus:outline-none focus:border-white text-center w-full appearance-none cursor-pointer [color-scheme:dark]">
                 </div>
             </div>
         </div>
@@ -108,7 +108,7 @@
                 <!-- Live Chart -->
                 <div class="lg:col-span-1">
                     <div class="bg-white p-5 rounded-xl shadow-sm border border-ledger-line sticky top-24">
-                        <h2 class="font-serif font-bold text-lg text-ledger-header mb-4 border-b pb-2">Grafik Hadir Hari Ini</h2>
+                        <h2 class="font-serif font-bold text-lg text-ledger-header mb-4 border-b pb-2">Grafik Kehadiran</h2>
                         
                         <div class="w-full h-48">
                             <canvas id="todayChart"></canvas>
@@ -305,6 +305,19 @@
         return new Date(dateStr).toLocaleDateString('id-ID', options);
     }
 
+    function changeDate(newDateStr) {
+        if (!newDateStr) return; 
+        currentDateStr = newDateStr;
+        
+        if (globalAttendance[currentDateStr] && Object.keys(globalAttendance[currentDateStr]).length > 0) {
+            isTodaySubmitted = true;
+        } else {
+            isTodaySubmitted = false;
+        }
+        
+        renderPresensi();
+    }
+
     function getBaseStatus(statusStr) {
         if (!statusStr) return null;
         if (statusStr.startsWith('Lainnya')) return 'Lainnya';
@@ -409,7 +422,7 @@
             textStatus.textContent = 'Status: Sudah Disimpan (Terkunci)';
             textStatus.classList.remove('text-gray-800');
             textStatus.classList.add('text-emerald-700');
-            subStatus.textContent = 'Data presensi hari ini sudah dikunci. Klik Hapus & Edit Ulang jika ada kesalahan.';
+            subStatus.textContent = 'Data presensi tanggal ini sudah dikunci. Klik Hapus & Edit Ulang jika ada kesalahan.';
         } else {
             btnSimpan.classList.remove('hidden');
             btnReset.classList.add('hidden');
@@ -534,7 +547,7 @@
 
         const todayAtt = getTodayAttendance();
         if (Object.keys(todayAtt).length === 0) {
-            customAlert('Perhatian', 'Belum ada data kehadiran yang diisi hari ini.');
+            customAlert('Perhatian', 'Belum ada data kehadiran yang diisi untuk tanggal ini.');
             return;
         }
 
@@ -552,7 +565,7 @@
             
             isTodaySubmitted = true;
             renderPresensi();
-            customAlert('Berhasil', 'Data presensi hari ini berhasil disimpan dan dikunci.');
+            customAlert('Berhasil', 'Data presensi tanggal ini berhasil disimpan dan dikunci.');
         })
         .catch(err => {
             hideLoading();
@@ -561,7 +574,7 @@
     }
 
     function resetPresensiHariIni() {
-        showInputModal('Hapus & Edit Ulang', 'Masukkan PIN (123456) untuk membuka kunci dan mereset presensi hari ini:', 'password', (pin) => {
+        showInputModal('Hapus & Edit Ulang', `Masukkan PIN (123456) untuk mereset presensi tanggal ${currentDateStr}:`, 'password', (pin) => {
             if (pin === '123456') {
                 showLoading('Mereset presensi...');
                 fetch(GAS_WEB_APP_URL + '?action=deleteAttendance', {
@@ -578,7 +591,7 @@
                     globalAttendance[currentDateStr] = {}; 
                     isTodaySubmitted = false;
                     renderPresensi();
-                    customAlert('Berhasil', 'Data hari ini telah dihapus. Silakan isi ulang presensi.');
+                    customAlert('Berhasil', 'Data tanggal ini telah dihapus. Silakan isi ulang presensi.');
                 })
                 .catch(err => {
                     hideLoading();
@@ -823,13 +836,13 @@
 
     function initApp() {
         if (GAS_WEB_APP_URL === 'ISI_DENGAN_URL_WEB_APP_ANDA_YANG_BARU') {
-            document.getElementById('current-date-display').textContent = 'PENGATURAN URL BELUM SELESAI';
+            document.getElementById('date-picker').value = getTodayString();
             customAlert('Error Pengaturan', 'Anda belum memasukkan URL Web App Google Apps Script di dalam kode index.html baris ~270. Aplikasi tidak dapat menarik data.');
             return;
         }
 
         currentDateStr = getTodayString();
-        document.getElementById('current-date-display').textContent = formatDateDisplay(currentDateStr);
+        document.getElementById('date-picker').value = currentDateStr;
         
         showLoading('Memuat data dari Google Sheets...');
         
