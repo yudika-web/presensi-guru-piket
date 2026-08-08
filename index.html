@@ -106,15 +106,15 @@
                 </div>
 
                 <!-- Live Chart -->
-            <div class="lg:col-span-1">
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-ledger-line sticky top-24">
-                    <h2 class="font-serif font-bold text-lg text-ledger-header mb-4 border-b pb-2">Grafik Hadir Hari Ini</h2>
-                    
-                    <div class="w-full h-48">
-                        <canvas id="todayChart"></canvas>
-                    </div>
-                    
-                    <div class="mt-6 space-y-2 text-sm" id="today-summary-list">
+                <div class="lg:col-span-1">
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-ledger-line sticky top-24">
+                        <h2 class="font-serif font-bold text-lg text-ledger-header mb-4 border-b pb-2">Grafik Hadir Hari Ini</h2>
+                        
+                        <div class="w-full h-48">
+                            <canvas id="todayChart"></canvas>
+                        </div>
+                        
+                        <div class="mt-6 space-y-2 text-sm" id="today-summary-list">
                             <!-- Summary text -->
                         </div>
                     </div>
@@ -263,40 +263,21 @@
     </div>
 
     <script>
-    const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxNQmcEd_6JogJnWYSd0OYymjkQfbEkYRiVdmIuI8zEh52EZ8wDJAkFZrz4qTsgisH9/exec';
+    // =======================================================================================
+    // ⚠️ PENTING: Ganti URL di bawah dengan URL Web App Anda yang baru dari Google Apps Script
+    // =======================================================================================
+    const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyhG4EGT4kT7JndGeAMTZ4dm21Lf0lGEyYEIdfij3YFwdTsUsyYM4rvOERmAFNjYWGAYA/exec';
     
-    const DB_STAFF = 'bukuPiket_staff';
-    const DB_ATTENDANCE = 'bukuPiket_attendance';
     const STATUS_OPTIONS = ['Hadir', 'Sakit', 'Izin', 'Tugas Luar', 'Lainnya'];
     const CATEGORY_ORDER = ['Kepala Sekolah', 'Guru', 'Tenaga Kependidikan'];
     
     let todayChartInstance = null;
     let rekapChartInstance = null;
     let currentDateStr = ''; 
-    let isTodaySubmitted = false; // State untuk mengunci presensi hari ini
+    let isTodaySubmitted = false; 
     
-    // State Global untuk menyimpan data dari Google Sheets
     let globalStaff = [];
     let globalAttendance = {};
-
-    // Data riil yang diperbarui (NIP Kepsek dikosongkan)
-    const seedData = [
-            { id: generateId(), nama: 'DEWA AYU MADE BUNTARI, S.Pd', kategori: 'Kepala Sekolah', nip: '', isActive: true },
-            { id: generateId(), nama: 'FRANSIUS SUTRISNA WIJAYA, S.Pd', kategori: 'Guru', nip: '', isActive: true },
-            { id: generateId(), nama: 'FIAN CHRISNA INDIKAWATI, S.Pd', kategori: 'Guru', nip: '', isActive: true },
-            { id: generateId(), nama: 'OCE FEBRIANI, S.Pd', kategori: 'Guru', nip: '', isActive: true },
-            { id: generateId(), nama: 'YUDI KURNIAWAN, S.Pd', kategori: 'Guru', nip: '', isActive: true },
-            { id: generateId(), nama: 'YULIANA, S.Pd', kategori: 'Guru', nip: '', isActive: true },
-            { id: generateId(), nama: 'AGUS SULISTIO, S.Pd', kategori: 'Guru', nip: '', isActive: true },
-            { id: generateId(), nama: 'AGUS PURWANTO, S.Pd', kategori: 'Guru', nip: '', isActive: true },
-            { id: generateId(), nama: 'DETI ERNI WIDIASTUTI, S.Pd.I', kategori: 'Guru', nip: '', isActive: true },
-            { id: generateId(), nama: 'HERLINA, S.Pd', kategori: 'Guru', nip: '', isActive: true },
-            { id: generateId(), nama: 'TRI FARIDA, S.Pd', kategori: 'Guru', nip: '', isActive: true },
-            { id: generateId(), nama: 'HERMAN, S.Pd', kategori: 'Guru', nip: '', isActive: true },
-            { id: generateId(), nama: 'SURTI', kategori: 'Tenaga Kependidikan', nip: '', isActive: true },
-            { id: generateId(), nama: 'RITAMALAH', kategori: 'Tenaga Kependidikan', nip: '', isActive: true },
-            { id: generateId(), nama: 'M SOHOR', kategori: 'Tenaga Kependidikan', nip: '', isActive: true }
-    ];
 
     function showLoading(text) {
         document.getElementById('loading-text').textContent = text;
@@ -311,20 +292,19 @@
         return Math.random().toString(36).substr(2, 9);
     }
 
-        function getTodayString() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
+    function getTodayString() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
 
-        function formatDateDisplay(dateStr) {
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            return new Date(dateStr).toLocaleDateString('id-ID', options);
-        }
+    function formatDateDisplay(dateStr) {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        return new Date(dateStr).toLocaleDateString('id-ID', options);
+    }
 
-        // Ekstraksi status dasar jika ada "Lainnya: [keterangan]"
     function getBaseStatus(statusStr) {
         if (!statusStr) return null;
         if (statusStr.startsWith('Lainnya')) return 'Lainnya';
@@ -337,12 +317,11 @@
         globalStaff = data; 
         showLoading('Menyimpan pembaruan pegawai...');
         
-        // Kirim HTTP POST ke Google Apps Script
         fetch(GAS_WEB_APP_URL + '?action=syncStaff', {
             method: 'POST',
             redirect: 'follow',
             body: JSON.stringify({ staff: globalStaff }),
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' } // Hindari preflight CORS problem
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
         })
         .then(res => res.json())
         .then(res => {
@@ -356,11 +335,6 @@
     }
     
     function getAttendanceData() { return globalAttendance; }
-    
-    // saveAttendanceData secara spesifik difokuskan per tanggal agar lebih ringan disinkronisasi 
-    function saveAttendanceData(data) { 
-        globalAttendance = data; 
-    }
 
     function getTodayAttendance() {
         if (!globalAttendance[currentDateStr]) {
@@ -371,519 +345,520 @@
 
     let inputModalCallback = null;
 
-        function showInputModal(title, message, type, callback) {
-            document.getElementById('input-modal-title').textContent = title;
-            document.getElementById('input-modal-message').textContent = message;
-            
-            const inputField = document.getElementById('input-modal-field');
-            inputField.type = type;
-            inputField.value = ''; // Reset
-            
-            document.getElementById('input-modal').classList.remove('hidden');
-            inputField.focus();
-            
-            inputModalCallback = callback;
-        }
+    function showInputModal(title, message, type, callback) {
+        document.getElementById('input-modal-title').textContent = title;
+        document.getElementById('input-modal-message').textContent = message;
+        
+        const inputField = document.getElementById('input-modal-field');
+        inputField.type = type;
+        inputField.value = ''; // Reset
+        
+        document.getElementById('input-modal').classList.remove('hidden');
+        inputField.focus();
+        
+        inputModalCallback = callback;
+    }
 
-        function closeInputModal() {
-            document.getElementById('input-modal').classList.add('hidden');
-            inputModalCallback = null;
-        }
+    function closeInputModal() {
+        document.getElementById('input-modal').classList.add('hidden');
+        inputModalCallback = null;
+    }
 
-        document.getElementById('input-modal-btn-submit').addEventListener('click', () => {
-            if (inputModalCallback) {
-                const val = document.getElementById('input-modal-field').value.trim();
-                inputModalCallback(val);
-            }
-            closeInputModal();
+    document.getElementById('input-modal-btn-submit').addEventListener('click', () => {
+        if (inputModalCallback) {
+            const val = document.getElementById('input-modal-field').value.trim();
+            inputModalCallback(val);
+        }
+        closeInputModal();
+    });
+
+    function customAlert(title, message) {
+        document.getElementById('alert-title').textContent = title;
+        document.getElementById('alert-message').textContent = message;
+        document.getElementById('alert-modal').classList.remove('hidden');
+    }
+
+    function closeAlert() { document.getElementById('alert-modal').classList.add('hidden'); }
+
+    function switchTab(tabId) {
+        ['tab-presensi', 'tab-rekap', 'tab-kelola'].forEach(id => {
+            document.getElementById(id).classList.add('hidden');
         });
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active', 'text-ledger-header');
+            btn.classList.add('text-gray-500');
+        });
+        
+        document.getElementById(tabId).classList.remove('hidden');
+        event.currentTarget.classList.add('active', 'text-ledger-header');
+        event.currentTarget.classList.remove('text-gray-500');
 
-        function customAlert(title, message) {
-            document.getElementById('alert-title').textContent = title;
-            document.getElementById('alert-message').textContent = message;
-            document.getElementById('alert-modal').classList.remove('hidden');
+        if (tabId === 'tab-rekap') updateRekap();
+        if (tabId === 'tab-kelola') renderKelola();
+    }
+
+    function updateActionUI() {
+        const btnSimpan = document.getElementById('btn-simpan-presensi');
+        const btnReset = document.getElementById('btn-reset-presensi');
+        const textStatus = document.getElementById('status-pengisian-text');
+        const subStatus = document.getElementById('status-pengisian-sub');
+
+        if (isTodaySubmitted) {
+            btnSimpan.classList.add('hidden');
+            btnReset.classList.remove('hidden');
+            textStatus.textContent = 'Status: Sudah Disimpan (Terkunci)';
+            textStatus.classList.remove('text-gray-800');
+            textStatus.classList.add('text-emerald-700');
+            subStatus.textContent = 'Data presensi hari ini sudah dikunci. Klik Hapus & Edit Ulang jika ada kesalahan.';
+        } else {
+            btnSimpan.classList.remove('hidden');
+            btnReset.classList.add('hidden');
+            textStatus.textContent = 'Status: Belum Disimpan';
+            textStatus.classList.remove('text-emerald-700');
+            textStatus.classList.add('text-gray-800');
+            subStatus.textContent = 'Pastikan semua data terisi, lalu klik Simpan Presensi.';
         }
+    }
 
-        function closeAlert() { document.getElementById('alert-modal').classList.add('hidden'); }
+    function renderPresensi() {
+        const staffList = getStaff().filter(s => s.isActive);
+        const container = document.getElementById('presensi-list-container');
+        container.innerHTML = '';
 
-        function switchTab(tabId) {
-            ['tab-presensi', 'tab-rekap', 'tab-kelola'].forEach(id => {
-                document.getElementById(id).classList.add('hidden');
-            });
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active', 'text-ledger-header');
-                btn.classList.add('text-gray-500');
-            });
+        const todayAtt = getTodayAttendance();
+
+        CATEGORY_ORDER.forEach(cat => {
+            const catStaff = staffList.filter(s => s.kategori === cat);
+            if (catStaff.length === 0) return;
+
+            const section = document.createElement('div');
+            section.className = 'bg-white rounded-xl shadow-sm border border-ledger-line overflow-hidden mb-6';
+            section.innerHTML = `<div class="bg-gray-50 px-5 py-3 border-b border-gray-200"><h3 class="font-serif font-bold text-ledger-header uppercase text-sm tracking-wider">${cat}</h3></div>`;
             
-            document.getElementById(tabId).classList.remove('hidden');
-            event.currentTarget.classList.add('active', 'text-ledger-header');
-            event.currentTarget.classList.remove('text-gray-500');
+            const list = document.createElement('div');
+            list.className = 'divide-y divide-gray-100';
 
-            if (tabId === 'tab-rekap') updateRekap();
-            if (tabId === 'tab-kelola') renderKelola();
-        }
-
-        function updateActionUI() {
-            const btnSimpan = document.getElementById('btn-simpan-presensi');
-            const btnReset = document.getElementById('btn-reset-presensi');
-            const textStatus = document.getElementById('status-pengisian-text');
-            const subStatus = document.getElementById('status-pengisian-sub');
-
-            if (isTodaySubmitted) {
-                btnSimpan.classList.add('hidden');
-                btnReset.classList.remove('hidden');
-                textStatus.textContent = 'Status: Sudah Disimpan (Terkunci)';
-                textStatus.classList.remove('text-gray-800');
-                textStatus.classList.add('text-emerald-700');
-                subStatus.textContent = 'Data presensi hari ini sudah dikunci. Klik Hapus & Edit Ulang jika ada kesalahan.';
-            } else {
-                btnSimpan.classList.remove('hidden');
-                btnReset.classList.add('hidden');
-                textStatus.textContent = 'Status: Belum Disimpan';
-                textStatus.classList.remove('text-emerald-700');
-                textStatus.classList.add('text-gray-800');
-                subStatus.textContent = 'Pastikan semua data terisi, lalu klik Simpan Presensi.';
-            }
-        }
-
-        function renderPresensi() {
-            const staffList = getStaff().filter(s => s.isActive);
-            const container = document.getElementById('presensi-list-container');
-            container.innerHTML = '';
-
-            const todayAtt = getTodayAttendance();
-
-            CATEGORY_ORDER.forEach(cat => {
-                const catStaff = staffList.filter(s => s.kategori === cat);
-                if (catStaff.length === 0) return;
-
-                const section = document.createElement('div');
-                section.className = 'bg-white rounded-xl shadow-sm border border-ledger-line overflow-hidden mb-6';
-                section.innerHTML = `<div class="bg-gray-50 px-5 py-3 border-b border-gray-200"><h3 class="font-serif font-bold text-ledger-header uppercase text-sm tracking-wider">${cat}</h3></div>`;
+            catStaff.forEach(person => {
+                const currentFullStatus = todayAtt[person.id] || null;
+                const baseStatus = getBaseStatus(currentFullStatus);
                 
-                const list = document.createElement('div');
-                list.className = 'divide-y divide-gray-100';
+                const row = document.createElement('div');
+                row.className = 'p-5 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 hover:bg-gray-50/50 transition-colors';
+                row.id = `row-staff-${person.id}`;
+                
+                let nameHtml = `<div class="flex-1"><p class="font-medium text-gray-900">${person.nama}</p>`;
+                if (person.nip) nameHtml += `<p class="text-xs text-gray-500 mt-0.5">NIP. ${person.nip}</p>`;
+                
+                let detailHtml = '';
+                if (currentFullStatus && currentFullStatus.startsWith('Lainnya: ')) {
+                    const note = currentFullStatus.replace('Lainnya: ', '');
+                    detailHtml = `<p class="text-xs text-slate-500 mt-1 italic border-l-2 border-slate-300 pl-2">Ket: ${note}</p>`;
+                }
+                nameHtml += `${detailHtml}</div>`;
 
-                catStaff.forEach(person => {
-                    const currentFullStatus = todayAtt[person.id] || null;
-                    const baseStatus = getBaseStatus(currentFullStatus);
+                let buttonsHtml = `<div class="flex flex-wrap gap-2 w-full xl:w-auto">`;
+                const disabledAttr = isTodaySubmitted ? 'disabled' : '';
+                
+                STATUS_OPTIONS.forEach(opt => {
+                    const cleanOpt = opt.replace(/\s+/g, '');
+                    const isActive = baseStatus === opt;
                     
-                    const row = document.createElement('div');
-                    row.className = 'p-5 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 hover:bg-gray-50/50 transition-colors';
-                    row.id = `row-staff-${person.id}`;
-                    
-                    let nameHtml = `<div class="flex-1"><p class="font-medium text-gray-900">${person.nama}</p>`;
-                    if (person.nip) nameHtml += `<p class="text-xs text-gray-500 mt-0.5">NIP. ${person.nip}</p>`;
-                    
-                    // Show keterangan detail if "Lainnya"
-                    let detailHtml = '';
-                    if (currentFullStatus && currentFullStatus.startsWith('Lainnya: ')) {
-                        const note = currentFullStatus.replace('Lainnya: ', '');
-                        detailHtml = `<p class="text-xs text-slate-500 mt-1 italic border-l-2 border-slate-300 pl-2">Ket: ${note}</p>`;
+                    let styleClass = '';
+                    if (isTodaySubmitted) {
+                        styleClass = isActive ? `active-${cleanOpt} cursor-not-allowed opacity-90` : 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed opacity-50';
+                    } else {
+                        styleClass = isActive ? `active-${cleanOpt}` : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-100';
                     }
-                    nameHtml += `${detailHtml}</div>`;
 
-                    let buttonsHtml = `<div class="flex flex-wrap gap-2 w-full xl:w-auto">`;
-                    const disabledAttr = isTodaySubmitted ? 'disabled' : '';
-                    
-                    STATUS_OPTIONS.forEach(opt => {
-                        const cleanOpt = opt.replace(/\s+/g, '');
-                        const isActive = baseStatus === opt;
-                        
-                        let styleClass = '';
-                        if (isTodaySubmitted) {
-                            styleClass = isActive ? `active-${cleanOpt} cursor-not-allowed opacity-90` : 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed opacity-50';
-                        } else {
-                            styleClass = isActive ? `active-${cleanOpt}` : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-100';
-                        }
-
-                        buttonsHtml += `
-                            <button onclick="handleStatusClick('${person.id}', '${opt}')" 
-                                    class="status-btn ${styleClass} flex-1 sm:flex-none px-3 py-1.5 text-xs sm:text-sm border rounded-md font-medium transition-all duration-200 shadow-sm"
-                                    id="btn-${person.id}-${cleanOpt}" ${disabledAttr}>
-                                ${opt}
-                            </button>
-                        `;
-                    });
-                    buttonsHtml += `</div>`;
-
-                    row.innerHTML = nameHtml + buttonsHtml;
-                    list.appendChild(row);
+                    buttonsHtml += `
+                        <button onclick="handleStatusClick('${person.id}', '${opt}')" 
+                                class="status-btn ${styleClass} flex-1 sm:flex-none px-3 py-1.5 text-xs sm:text-sm border rounded-md font-medium transition-all duration-200 shadow-sm"
+                                id="btn-${person.id}-${cleanOpt}" ${disabledAttr}>
+                            ${opt}
+                        </button>
+                    `;
                 });
-                section.appendChild(list);
-                container.appendChild(section);
+                buttonsHtml += `</div>`;
+
+                row.innerHTML = nameHtml + buttonsHtml;
+                list.appendChild(row);
             });
-            updateActionUI();
-            updateLiveChart();
-        }
+            section.appendChild(list);
+            container.appendChild(section);
+        });
+        updateActionUI();
+        updateLiveChart();
+    }
 
-        function handleStatusClick(staffId, clickedStatus) {
-            if (isTodaySubmitted) return; // Cegah klik jika sudah dikunci
+    function handleStatusClick(staffId, clickedStatus) {
+        if (isTodaySubmitted) return;
 
-            const allData = getAttendanceData();
-            let todayAtt = allData[currentDateStr] || {};
-            const currentFullStatus = todayAtt[staffId];
-            const currentBaseStatus = getBaseStatus(currentFullStatus);
+        const allData = getAttendanceData();
+        let todayAtt = allData[currentDateStr] || {};
+        const currentFullStatus = todayAtt[staffId];
+        const currentBaseStatus = getBaseStatus(currentFullStatus);
 
-            if (clickedStatus === 'Lainnya') {
-                if (currentBaseStatus === 'Lainnya') {
-                    // Matikan status jika diklik lagi (toggle off)
-                    delete todayAtt[staffId];
-                    finalizeLocalStatusUpdate(allData, todayAtt);
-                } else {
-                    // Munculkan input untuk Keterangan Lainnya
-                    showInputModal('Keterangan Lainnya', 'Masukkan detail keterangan:', 'text', (ket) => {
-                        if (ket) {
-                            todayAtt[staffId] = `Lainnya: ${ket}`;
-                            finalizeLocalStatusUpdate(allData, todayAtt);
-                        }
-                    });
-                }
-            } else {
-                // Toggle Normal (Hadir, Sakit, dsb)
-                if (currentBaseStatus === clickedStatus) {
-                    delete todayAtt[staffId];
-                } else {
-                    todayAtt[staffId] = clickedStatus;
-                }
-                
+        if (clickedStatus === 'Lainnya') {
+            if (currentBaseStatus === 'Lainnya') {
+                delete todayAtt[staffId];
                 finalizeLocalStatusUpdate(allData, todayAtt);
-            }
-        }
-
-        function finalizeLocalStatusUpdate(allData, todayAtt) {
-            allData[currentDateStr] = todayAtt;
-            globalAttendance = allData;
-            renderPresensi(); 
-        }
-
-        function simpanPresensiHariIni() {
-            const todayAtt = getTodayAttendance();
-            if (Object.keys(todayAtt).length === 0) {
-                customAlert('Perhatian', 'Belum ada data kehadiran yang diisi hari ini.');
-                return;
-            }
-
-            showLoading('Menyimpan presensi...');
-            fetch(GAS_WEB_APP_URL + '?action=syncAttendance', {
-                method: 'POST',
-                redirect: 'follow',
-                body: JSON.stringify({ dateStr: currentDateStr, dailyData: todayAtt }),
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-            })
-            .then(res => res.json())
-            .then(res => {
-                hideLoading();
-                if(res.status !== 'success') throw new Error(res.message);
-                
-                isTodaySubmitted = true;
-                renderPresensi();
-                customAlert('Berhasil', 'Data presensi hari ini berhasil disimpan dan dikunci.');
-            })
-            .catch(err => {
-                hideLoading();
-                customAlert('Error Sinkronisasi', 'Gagal menyimpan status ke server: ' + err.message);
-            });
-        }
-
-        function resetPresensiHariIni() {
-            showInputModal('Hapus & Edit Ulang', 'Masukkan PIN (123456) untuk membuka kunci dan mereset presensi hari ini:', 'password', (pin) => {
-                if (pin === '123456') {
-                    showLoading('Mereset presensi...');
-                    fetch(GAS_WEB_APP_URL + '?action=deleteAttendance', {
-                        method: 'POST',
-                        redirect: 'follow',
-                        body: JSON.stringify({ dateStr: currentDateStr }),
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-                    })
-                    .then(res => res.json())
-                    .then(res => {
-                        hideLoading();
-                        if(res.status !== 'success') throw new Error(res.message);
-                        
-                        globalAttendance[currentDateStr] = {}; 
-                        isTodaySubmitted = false;
-                        renderPresensi();
-                        customAlert('Berhasil', 'Data hari ini telah dihapus. Silakan isi ulang presensi.');
-                    })
-                    .catch(err => {
-                        hideLoading();
-                        customAlert('Gagal Mereset', 'Terjadi kesalahan: ' + err.message);
-                    });
-                } else {
-                    customAlert('Gagal', 'PIN yang Anda masukkan salah. Tindakan dibatalkan.');
-                }
-            });
-        }
-
-        function updateLiveChart() {
-            const todayAtt = getTodayAttendance();
-            let counts = { 'Hadir': 0, 'Sakit': 0, 'Izin': 0, 'Tugas Luar': 0, 'Lainnya': 0 };
-            
-            for (const status of Object.values(todayAtt)) {
-                const baseStatus = getBaseStatus(status);
-                if (counts[baseStatus] !== undefined) counts[baseStatus]++;
-            }
-            
-            const data = [counts['Hadir'], counts['Sakit'], counts['Izin'], counts['Tugas Luar'], counts['Lainnya']];
-            
-            if (!todayChartInstance) {
-                const ctx = document.getElementById('todayChart').getContext('2d');
-                todayChartInstance = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: STATUS_OPTIONS,
-                        datasets: [{
-                            label: 'Jumlah',
-                            data: data,
-                            backgroundColor: ['#0d9488', '#3b82f6', '#f59e0b', '#8b5cf6', '#64748b'],
-                            borderRadius: 4
-                        }]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: { x: { beginAtZero: true, ticks: { precision: 0, stepSize: 1 } } }
+            } else {
+                showInputModal('Keterangan Lainnya', 'Masukkan detail keterangan:', 'text', (ket) => {
+                    if (ket) {
+                        todayAtt[staffId] = `Lainnya: ${ket}`;
+                        finalizeLocalStatusUpdate(allData, todayAtt);
                     }
                 });
+            }
+        } else {
+            if (currentBaseStatus === clickedStatus) {
+                delete todayAtt[staffId];
             } else {
-                todayChartInstance.data.datasets[0].data = data;
-                todayChartInstance.update();
+                todayAtt[staffId] = clickedStatus;
             }
+            finalizeLocalStatusUpdate(allData, todayAtt);
+        }
+    }
 
-            const summaryList = document.getElementById('today-summary-list');
-            summaryList.innerHTML = '';
-            let hasData = false;
-            STATUS_OPTIONS.forEach(opt => {
-                if (counts[opt] > 0) {
-                    hasData = true;
-                    summaryList.innerHTML += `<div class="flex justify-between text-gray-700 border-b border-gray-100 pb-1"><span>${opt}</span><span class="font-bold">${counts[opt]}</span></div>`;
-                }
-            });
-            if (!hasData) {
-                summaryList.innerHTML = '<p class="text-gray-400 italic text-center">Belum ada data kehadiran.</p>';
-            }
+    function finalizeLocalStatusUpdate(allData, todayAtt) {
+        allData[currentDateStr] = todayAtt;
+        globalAttendance = allData;
+        renderPresensi(); 
+    }
+
+    function simpanPresensiHariIni() {
+        if (GAS_WEB_APP_URL === 'ISI_DENGAN_URL_WEB_APP_ANDA_YANG_BARU') {
+            customAlert('Error Pengaturan', 'Anda belum memasukkan URL Web App Google Apps Script di dalam kode index.html.');
+            return;
         }
 
-        function populateFilterPegawai() {
-            const select = document.getElementById('filter-pegawai');
-            select.innerHTML = '<option value="all">Semua Pegawai</option>';
-            getStaff().filter(s => s.isActive).forEach(person => {
-                select.innerHTML += `<option value="${person.id}">${person.nama}</option>`;
-            });
+        const todayAtt = getTodayAttendance();
+        if (Object.keys(todayAtt).length === 0) {
+            customAlert('Perhatian', 'Belum ada data kehadiran yang diisi hari ini.');
+            return;
         }
 
-        function updateRekap() {
-            const periodMonths = parseInt(document.getElementById('filter-periode').value);
-            const selectedStaffId = document.getElementById('filter-pegawai').value || 'all';
-            const statusColors = { 'Hadir': '#0d9488', 'Sakit': '#3b82f6', 'Izin': '#f59e0b', 'Tugas Luar': '#8b5cf6', 'Lainnya': '#64748b' };
-            const now = new Date();
-            const cutoffDate = new Date();
-            cutoffDate.setMonth(now.getMonth() - periodMonths);
-            const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
-
-            const allData = getAttendanceData();
-            let totalCounts = { 'Hadir': 0, 'Sakit': 0, 'Izin': 0, 'Tugas Luar': 0, 'Lainnya': 0 };
-
-            for (const [date, dailyData] of Object.entries(allData)) {
-                if (date >= cutoffDateStr && date <= currentDateStr) {
-                    if (selectedStaffId === 'all') {
-                        for (const fullStatus of Object.values(dailyData)) {
-                            const baseStatus = getBaseStatus(fullStatus);
-                            if (totalCounts[baseStatus] !== undefined) totalCounts[baseStatus]++;
-                        }
-                    } else {
-                        const personStatus = dailyData[selectedStaffId];
-                        if (personStatus) {
-                            const baseStatus = getBaseStatus(personStatus);
-                            if (totalCounts[baseStatus] !== undefined) totalCounts[baseStatus]++;
-                        }
-                    }
-                }
-            }
-
-            const cardsContainer = document.getElementById('rekap-cards');
-            cardsContainer.innerHTML = '';
-            STATUS_OPTIONS.forEach(status => {
-                const card = document.createElement('div');
-                card.className = `p-4 rounded-lg shadow-sm text-white text-center flex flex-col justify-center`;
-                card.style.backgroundColor = statusColors[status];
-                card.innerHTML = `<div class="text-sm opacity-90 mb-1">${status}</div><div class="text-2xl font-bold font-serif">${totalCounts[status]}</div>`;
-                cardsContainer.appendChild(card);
-            });
-
-            const data = STATUS_OPTIONS.map(opt => totalCounts[opt]);
-            const bgColors = STATUS_OPTIONS.map(opt => statusColors[opt]);
-
-            if (!rekapChartInstance) {
-                const ctx = document.getElementById('rekapChart').getContext('2d');
-                rekapChartInstance = new Chart(ctx, {
-                    type: 'bar',
-                    data: { labels: STATUS_OPTIONS, datasets: [{ label: 'Total Kehadiran', data: data, backgroundColor: bgColors, borderRadius: 4 }] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
-                });
-            } else {
-                rekapChartInstance.data.datasets[0].data = data;
-                rekapChartInstance.update();
-            }
-        }
-
-        function exportCSV() {
-            const periodMonths = parseInt(document.getElementById('filter-periode').value);
-            const selectedStaffId = document.getElementById('filter-pegawai').value || 'all';
+        showLoading('Menyimpan presensi...');
+        fetch(GAS_WEB_APP_URL + '?action=syncAttendance', {
+            method: 'POST',
+            redirect: 'follow',
+            body: JSON.stringify({ dateStr: currentDateStr, dailyData: todayAtt }),
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+        })
+        .then(res => res.json())
+        .then(res => {
+            hideLoading();
+            if(res.status !== 'success') throw new Error(res.message);
             
-            const now = new Date();
-            const cutoffDate = new Date();
-            cutoffDate.setMonth(now.getMonth() - periodMonths);
-            const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
-
-            const allData = getAttendanceData();
-            const staffList = getStaff();
-            
-            // BOM for Excel UTF-8 support
-            let csvContent = "\uFEFFTanggal,Kategori,Nama,NIP,Status,Keterangan\n";
-
-            // Sort dates descending
-            const dates = Object.keys(allData).filter(d => d >= cutoffDateStr && d <= currentDateStr).sort().reverse();
-
-            dates.forEach(date => {
-                const dailyData = allData[date];
-                for (const [id, fullStatus] of Object.entries(dailyData)) {
-                    if (selectedStaffId === 'all' || selectedStaffId === id) {
-                        const staff = staffList.find(s => s.id === id);
-                        if (!staff) continue;
-
-                        const baseStatus = getBaseStatus(fullStatus);
-                        const ket = fullStatus.startsWith('Lainnya: ') ? fullStatus.replace('Lainnya: ', '') : '';
-                        
-                        // Clean quotes for CSV
-                        const cleanNama = staff.nama.replace(/"/g, '""');
-                        const cleanKet = ket.replace(/"/g, '""');
-                        
-                        csvContent += `"${date}","${staff.kategori}","${cleanNama}","${staff.nip || ''}","${baseStatus}","${cleanKet}"\n`;
-                    }
-                }
-            });
-
-            // Create download link
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            if (link.download !== undefined) {
-                const url = URL.createObjectURL(blob);
-                link.setAttribute("href", url);
-                link.setAttribute("download", `Rekap_Presensi_${getTodayString()}.csv`);
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-        }
-
-        function renderKelola() {
-            const staffList = getStaff().filter(s => s.isActive);
-            const tbody = document.getElementById('table-pegawai');
-            tbody.innerHTML = '';
-
-            CATEGORY_ORDER.forEach(cat => {
-                const catStaff = staffList.filter(s => s.kategori === cat);
-                if(catStaff.length > 0) {
-                    const headerRow = document.createElement('tr');
-                    headerRow.className = 'bg-gray-100/50';
-                    headerRow.innerHTML = `<td colspan="3" class="px-6 py-2 text-xs font-bold text-gray-500 uppercase">${cat}</td>`;
-                    tbody.appendChild(headerRow);
-
-                    catStaff.forEach(person => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">${person.nama}</div>
-                                ${person.nip ? `<div class="text-xs text-gray-500">NIP. ${person.nip}</div>` : ''}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${person.kategori}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <button onclick="hapusPegawai('${person.id}', '${person.nama.replace(/'/g, "\\'")}')" class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1 rounded transition-colors shadow-sm">Hapus</button>
-                            </td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-                }
-            });
-        }
-
-        document.getElementById('form-tambah-pegawai').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const nama = document.getElementById('input-nama').value.trim();
-            const kategori = document.getElementById('input-kategori').value;
-            const nip = document.getElementById('input-nip').value.trim();
-
-            if (!nama) return;
-
-            const newStaff = { id: generateId(), nama: nama, kategori: kategori, nip: nip, isActive: true };
-            const staffList = getStaff();
-            staffList.push(newStaff);
-            saveStaff(staffList);
-
-            document.getElementById('form-tambah-pegawai').reset();
-            customAlert('Berhasil', `Data pegawai ${nama} berhasil ditambahkan.`);
-            populateFilterPegawai();
-            renderKelola();
+            isTodaySubmitted = true;
             renderPresensi();
+            customAlert('Berhasil', 'Data presensi hari ini berhasil disimpan dan dikunci.');
+        })
+        .catch(err => {
+            hideLoading();
+            customAlert('Error Sinkronisasi', 'Gagal menyimpan status ke server: ' + err.message);
         });
+    }
 
-        function hapusPegawai(id, nama) {
-            showInputModal('Hapus Data Pegawai', `Masukkan PIN Keamanan untuk menghapus data ${nama}:`, 'password', (pin) => {
-                if (pin === '123456') {
-                    const staffList = getStaff();
-                    const index = staffList.findIndex(s => s.id === id);
-                    if (index > -1) {
-                        staffList[index].isActive = false; // Soft delete
-                        saveStaff(staffList);
-                        populateFilterPegawai();
-                        renderKelola();
-                        renderPresensi();
-                        customAlert('Berhasil', 'Data berhasil dihapus dari daftar aktif. Riwayat presensi tetap aman.');
-                    }
-                } else {
-                    customAlert('Gagal', 'PIN yang Anda masukkan salah. Proses dibatalkan.');
-                }
-            });
-        }
-
-        function initApp() {
-            currentDateStr = getTodayString();
-            document.getElementById('current-date-display').textContent = formatDateDisplay(currentDateStr);
-            
-            showLoading('Memuat data dari Google Sheets...');
-            
-            fetch(https://script.google.com/macros/s/AKfycbzFww4HOgf_VH2tS2lXbqXpE00tqKsKwNZQdM5V8BLdlgImE2vaDUZVUz4KsIWWMqtZ/exec + '?action=getData', {
-                method: 'GET',
-                redirect: 'follow'
-            })
+    function resetPresensiHariIni() {
+        showInputModal('Hapus & Edit Ulang', 'Masukkan PIN (123456) untuk membuka kunci dan mereset presensi hari ini:', 'password', (pin) => {
+            if (pin === '123456') {
+                showLoading('Mereset presensi...');
+                fetch(GAS_WEB_APP_URL + '?action=deleteAttendance', {
+                    method: 'POST',
+                    redirect: 'follow',
+                    body: JSON.stringify({ dateStr: currentDateStr }),
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                })
                 .then(res => res.json())
-                .then(response => {
-                    globalStaff = response.staff;
-                    globalAttendance = response.attendance;
-                    
-                    // Cek apakah hari ini sudah pernah disimpan
-                    if (globalAttendance[currentDateStr] && Object.keys(globalAttendance[currentDateStr]).length > 0) {
-                        isTodaySubmitted = true;
-                    } else {
-                        isTodaySubmitted = false;
-                    }
-
-                    populateFilterPegawai();
-                    renderPresensi();
+                .then(res => {
                     hideLoading();
+                    if(res.status !== 'success') throw new Error(res.message);
+                    
+                    globalAttendance[currentDateStr] = {}; 
+                    isTodaySubmitted = false;
+                    renderPresensi();
+                    customAlert('Berhasil', 'Data hari ini telah dihapus. Silakan isi ulang presensi.');
                 })
                 .catch(err => {
                     hideLoading();
-                    customAlert('Koneksi Gagal', 'Gagal memuat data: ' + err.message);
+                    customAlert('Gagal Mereset', 'Terjadi kesalahan: ' + err.message);
                 });
+            } else {
+                customAlert('Gagal', 'PIN yang Anda masukkan salah. Tindakan dibatalkan.');
+            }
+        });
+    }
+
+    function updateLiveChart() {
+        const todayAtt = getTodayAttendance();
+        let counts = { 'Hadir': 0, 'Sakit': 0, 'Izin': 0, 'Tugas Luar': 0, 'Lainnya': 0 };
+        
+        for (const status of Object.values(todayAtt)) {
+            const baseStatus = getBaseStatus(status);
+            if (counts[baseStatus] !== undefined) counts[baseStatus]++;
+        }
+        
+        const data = [counts['Hadir'], counts['Sakit'], counts['Izin'], counts['Tugas Luar'], counts['Lainnya']];
+        
+        if (!todayChartInstance) {
+            const ctx = document.getElementById('todayChart').getContext('2d');
+            todayChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: STATUS_OPTIONS,
+                    datasets: [{
+                        label: 'Jumlah',
+                        data: data,
+                        backgroundColor: ['#0d9488', '#3b82f6', '#f59e0b', '#8b5cf6', '#64748b'],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { beginAtZero: true, ticks: { precision: 0, stepSize: 1 } } }
+                }
+            });
+        } else {
+            todayChartInstance.data.datasets[0].data = data;
+            todayChartInstance.update();
         }
 
-        window.addEventListener('DOMContentLoaded', initApp);
+        const summaryList = document.getElementById('today-summary-list');
+        summaryList.innerHTML = '';
+        let hasData = false;
+        STATUS_OPTIONS.forEach(opt => {
+            if (counts[opt] > 0) {
+                hasData = true;
+                summaryList.innerHTML += `<div class="flex justify-between text-gray-700 border-b border-gray-100 pb-1"><span>${opt}</span><span class="font-bold">${counts[opt]}</span></div>`;
+            }
+        });
+        if (!hasData) {
+            summaryList.innerHTML = '<p class="text-gray-400 italic text-center">Belum ada data kehadiran.</p>';
+        }
+    }
+
+    function populateFilterPegawai() {
+        const select = document.getElementById('filter-pegawai');
+        select.innerHTML = '<option value="all">Semua Pegawai</option>';
+        getStaff().filter(s => s.isActive).forEach(person => {
+            select.innerHTML += `<option value="${person.id}">${person.nama}</option>`;
+        });
+    }
+
+    function updateRekap() {
+        const periodMonths = parseInt(document.getElementById('filter-periode').value);
+        const selectedStaffId = document.getElementById('filter-pegawai').value || 'all';
+        const statusColors = { 'Hadir': '#0d9488', 'Sakit': '#3b82f6', 'Izin': '#f59e0b', 'Tugas Luar': '#8b5cf6', 'Lainnya': '#64748b' };
+        const now = new Date();
+        const cutoffDate = new Date();
+        cutoffDate.setMonth(now.getMonth() - periodMonths);
+        const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
+
+        const allData = getAttendanceData();
+        let totalCounts = { 'Hadir': 0, 'Sakit': 0, 'Izin': 0, 'Tugas Luar': 0, 'Lainnya': 0 };
+
+        for (const [date, dailyData] of Object.entries(allData)) {
+            if (date >= cutoffDateStr && date <= currentDateStr) {
+                if (selectedStaffId === 'all') {
+                    for (const fullStatus of Object.values(dailyData)) {
+                        const baseStatus = getBaseStatus(fullStatus);
+                        if (totalCounts[baseStatus] !== undefined) totalCounts[baseStatus]++;
+                    }
+                } else {
+                    const personStatus = dailyData[selectedStaffId];
+                    if (personStatus) {
+                        const baseStatus = getBaseStatus(personStatus);
+                        if (totalCounts[baseStatus] !== undefined) totalCounts[baseStatus]++;
+                    }
+                }
+            }
+        }
+
+        const cardsContainer = document.getElementById('rekap-cards');
+        cardsContainer.innerHTML = '';
+        STATUS_OPTIONS.forEach(status => {
+            const card = document.createElement('div');
+            card.className = `p-4 rounded-lg shadow-sm text-white text-center flex flex-col justify-center`;
+            card.style.backgroundColor = statusColors[status];
+            card.innerHTML = `<div class="text-sm opacity-90 mb-1">${status}</div><div class="text-2xl font-bold font-serif">${totalCounts[status]}</div>`;
+            cardsContainer.appendChild(card);
+        });
+
+        const data = STATUS_OPTIONS.map(opt => totalCounts[opt]);
+        const bgColors = STATUS_OPTIONS.map(opt => statusColors[opt]);
+
+        if (!rekapChartInstance) {
+            const ctx = document.getElementById('rekapChart').getContext('2d');
+            rekapChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: STATUS_OPTIONS, datasets: [{ label: 'Total Kehadiran', data: data, backgroundColor: bgColors, borderRadius: 4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+            });
+        } else {
+            rekapChartInstance.data.datasets[0].data = data;
+            rekapChartInstance.update();
+        }
+    }
+
+    function exportCSV() {
+        const periodMonths = parseInt(document.getElementById('filter-periode').value);
+        const selectedStaffId = document.getElementById('filter-pegawai').value || 'all';
+        
+        const now = new Date();
+        const cutoffDate = new Date();
+        cutoffDate.setMonth(now.getMonth() - periodMonths);
+        const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
+
+        const allData = getAttendanceData();
+        const staffList = getStaff();
+        
+        let csvContent = "\uFEFFTanggal,Kategori,Nama,NIP,Status,Keterangan\n";
+
+        const dates = Object.keys(allData).filter(d => d >= cutoffDateStr && d <= currentDateStr).sort().reverse();
+
+        dates.forEach(date => {
+            const dailyData = allData[date];
+            for (const [id, fullStatus] of Object.entries(dailyData)) {
+                if (selectedStaffId === 'all' || selectedStaffId === id) {
+                    const staff = staffList.find(s => s.id === id);
+                    if (!staff) continue;
+
+                    const baseStatus = getBaseStatus(fullStatus);
+                    const ket = fullStatus.startsWith('Lainnya: ') ? fullStatus.replace('Lainnya: ', '') : '';
+                    
+                    const cleanNama = staff.nama.replace(/"/g, '""');
+                    const cleanKet = ket.replace(/"/g, '""');
+                    
+                    csvContent += `"${date}","${staff.kategori}","${cleanNama}","${staff.nip || ''}","${baseStatus}","${cleanKet}"\n`;
+                }
+            }
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Rekap_Presensi_${getTodayString()}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }
+
+    function renderKelola() {
+        const staffList = getStaff().filter(s => s.isActive);
+        const tbody = document.getElementById('table-pegawai');
+        tbody.innerHTML = '';
+
+        CATEGORY_ORDER.forEach(cat => {
+            const catStaff = staffList.filter(s => s.kategori === cat);
+            if(catStaff.length > 0) {
+                const headerRow = document.createElement('tr');
+                headerRow.className = 'bg-gray-100/50';
+                headerRow.innerHTML = `<td colspan="3" class="px-6 py-2 text-xs font-bold text-gray-500 uppercase">${cat}</td>`;
+                tbody.appendChild(headerRow);
+
+                catStaff.forEach(person => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">${person.nama}</div>
+                            ${person.nip ? `<div class="text-xs text-gray-500">NIP. ${person.nip}</div>` : ''}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${person.kategori}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button onclick="hapusPegawai('${person.id}', '${person.nama.replace(/'/g, "\\'")}')" class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1 rounded transition-colors shadow-sm">Hapus</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        });
+    }
+
+    document.getElementById('form-tambah-pegawai').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const nama = document.getElementById('input-nama').value.trim();
+        const kategori = document.getElementById('input-kategori').value;
+        const nip = document.getElementById('input-nip').value.trim();
+
+        if (!nama) return;
+
+        const newStaff = { id: generateId(), nama: nama, kategori: kategori, nip: nip, isActive: true };
+        const staffList = getStaff();
+        staffList.push(newStaff);
+        saveStaff(staffList);
+
+        document.getElementById('form-tambah-pegawai').reset();
+        customAlert('Berhasil', `Data pegawai ${nama} berhasil ditambahkan.`);
+        populateFilterPegawai();
+        renderKelola();
+        renderPresensi();
+    });
+
+    function hapusPegawai(id, nama) {
+        showInputModal('Hapus Data Pegawai', `Masukkan PIN Keamanan untuk menghapus data ${nama}:`, 'password', (pin) => {
+            if (pin === '123456') {
+                const staffList = getStaff();
+                const index = staffList.findIndex(s => s.id === id);
+                if (index > -1) {
+                    staffList[index].isActive = false; 
+                    saveStaff(staffList);
+                    populateFilterPegawai();
+                    renderKelola();
+                    renderPresensi();
+                    customAlert('Berhasil', 'Data berhasil dihapus dari daftar aktif. Riwayat presensi tetap aman.');
+                }
+            } else {
+                customAlert('Gagal', 'PIN yang Anda masukkan salah. Proses dibatalkan.');
+            }
+        });
+    }
+
+    function initApp() {
+        if (GAS_WEB_APP_URL === 'ISI_DENGAN_URL_WEB_APP_ANDA_YANG_BARU') {
+            document.getElementById('current-date-display').textContent = 'PENGATURAN URL BELUM SELESAI';
+            customAlert('Error Pengaturan', 'Anda belum memasukkan URL Web App Google Apps Script di dalam kode index.html baris ~270. Aplikasi tidak dapat menarik data.');
+            return;
+        }
+
+        currentDateStr = getTodayString();
+        document.getElementById('current-date-display').textContent = formatDateDisplay(currentDateStr);
+        
+        showLoading('Memuat data dari Google Sheets...');
+        
+        fetch(GAS_WEB_APP_URL + '?action=getData', {
+            method: 'GET',
+            redirect: 'follow'
+        })
+            .then(res => res.json())
+            .then(response => {
+                globalStaff = response.staff;
+                globalAttendance = response.attendance;
+                
+                if (globalAttendance[currentDateStr] && Object.keys(globalAttendance[currentDateStr]).length > 0) {
+                    isTodaySubmitted = true;
+                } else {
+                    isTodaySubmitted = false;
+                }
+
+                populateFilterPegawai();
+                renderPresensi();
+                hideLoading();
+            })
+            .catch(err => {
+                hideLoading();
+                customAlert('Koneksi Gagal', 'Gagal memuat data: ' + err.message);
+            });
+    }
+
+    window.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
 </html>
